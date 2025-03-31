@@ -1,6 +1,5 @@
 import Image from "next/image"
 import Link from "next/link"
-import { Menu } from "lucide-react"
 import SearchInput from "./search-input"
 import AuthButton from "@/modules/auth/ui/components/auth-button"
 import { SidebarTrigger } from "@/components/ui/sidebar"

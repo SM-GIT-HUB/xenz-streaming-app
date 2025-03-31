@@ -6,11 +6,11 @@ import PersonalSection from "./personal-section"
 function HomeSidebar() {
   return (
     <Sidebar className="pt-16 x-40 border-none" collapsible="icon">
-        <SidebarContent className="bg-background">
-            <MainSection/>
-            <Separator/>
-            <PersonalSection/>
-        </SidebarContent>
+      <SidebarContent className="bg-background">
+        <MainSection/>
+        <Separator/>
+        <PersonalSection/>
+      </SidebarContent>
     </Sidebar>
   )
 }

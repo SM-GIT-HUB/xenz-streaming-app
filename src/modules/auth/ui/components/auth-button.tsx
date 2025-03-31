@@ -21,7 +21,6 @@ function AuthButton() {
           </Button>
         </SignInButton>
       </SignedOut>
-
     </>
   )
 }
