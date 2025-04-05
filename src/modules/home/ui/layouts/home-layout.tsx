@@ -3,7 +3,7 @@ import { HomeNavbar } from "../components/home-navbar"
 import HomeSidebar from "../components/home-sidebar";
 
 interface Props {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }
 
 function HomeLayout({ children }: Props) {
