@@ -9,7 +9,7 @@ function VideosSection() {
   }, {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   })
-
+  
   return (
     <div>
       {JSON.stringify(data)}
