@@ -1,9 +1,7 @@
 import HomeView from "@/modules/home/ui/views/home-view"
 import { trpc } from "@/trpc/server"
 
-
 import { HydrateClient } from "@/trpc/server"
-import { Suspense } from "react"
 
 export const dynamic = "force-dynamic";
 
