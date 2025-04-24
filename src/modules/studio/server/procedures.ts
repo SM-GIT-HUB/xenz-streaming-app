@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { videos } from "@/db/schema"
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init"
-import { eq, and, or, lt, desc, gt } from "drizzle-orm"
+import { eq, and, or, lt, desc } from "drizzle-orm"
 import { z } from "zod"
 
 export const studioRouter = createTRPCRouter({
@@ -22,10 +22,10 @@ export const studioRouter = createTRPCRouter({
             eq(videos.userId, userId), 
             cursor?
             or(
-                gt(videos.updatedAt, cursor.updatedAt),
+                lt(videos.updatedAt, cursor.updatedAt),
                 and(
                     eq(videos.updatedAt, cursor.updatedAt),
-                    gt(videos.id, cursor.id)
+                    lt(videos.id, cursor.id)
                 )
             ) :
             undefined
@@ -42,6 +42,6 @@ export const studioRouter = createTRPCRouter({
         const lastItem = data[data.length - 1];
         const nextCursor = hasMore? { id: lastItem.id, updatedAt: lastItem.updatedAt } : null;
 
-        return { items: { ...data }, nextCursor };
+        return { items: data, nextCursor };
     })
 })
