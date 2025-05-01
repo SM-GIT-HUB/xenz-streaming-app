@@ -27,7 +27,7 @@ function InfiniteScroll({ isManual = false, hasNextPage, isFetchingNextPage, fet
       <div ref={targetRef} className="h-1" />
       {
         hasNextPage? (
-          <Button variant="secondary" disabled={!hasNextPage || isFetchingNextPage} onClick={() => fetchNextPage()}>
+          <Button variant="secondary" disabled={!hasNextPage || isFetchingNextPage} onClick={() => fetchNextPage()} className="border border-black hover:border-[#093b7c]" >
             {
               isFetchingNextPage? "Loading..." :
               "Load more"
