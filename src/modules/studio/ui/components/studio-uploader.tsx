@@ -17,10 +17,10 @@ function StudioUploader({ endpoint, onSuccess } : StudioUploaderProps) {
 
       <MuxUploaderDrop muxUploader={UPLOADER_ID} className="group/drop">
         <div slot="heading" className="flex flex-col items-center gap-6">
-          <div className="flex items-center justify-center gap-2 rounded-full bg-muted h-32 w-32">
-            <UploadIcon className="size-10 text-muted-foreground group/drop-[&[active]]:animate-bounce transition-all duration-300" onClick={() => {
-              document.getElementById("upload-btn-for-muxuploader")?.click();
-            }} />
+          <div className="flex items-center justify-center gap-2 rounded-full bg-muted h-32 w-32 cursor-pointer hover:bg-[#0000000d]"  onClick={() => {
+              document.getElementById("upload-btn-for-muxuploader")?.click()
+            }}>
+            <UploadIcon className="size-10 text-muted-foreground group/drop-[&[active]]:animate-bounce transition-all duration-300" />
           </div>
 
           <div className="flex flex-col gap-2 text-center">

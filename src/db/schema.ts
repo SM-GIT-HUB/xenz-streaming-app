@@ -1,4 +1,5 @@
 import { relations } from "drizzle-orm"
+import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod"
 import { integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core"
 
 export const users = pgTable("users", {
@@ -41,8 +42,8 @@ export const videos = pgTable("videos", {
     muxAssetId: text("mux_asset_id").unique(),
     muxUploadId: text("mux_upload_id").unique(),
     muxPlaybackId: text("mux_playback_id").unique(),
-    muxTrackId: text("mux_track_id").unique(),
-    muxTrackStatus: text("mux_track_status").unique(),
+    muxTrackId: text("mux_track_id"),
+    muxTrackStatus: text("mux_track_status"),
     
     thumbnailUrl: text("thumbnail_url"),
     previewUrl: text("preview_url"),
@@ -60,6 +61,10 @@ export const videos = pgTable("videos", {
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull()
 })
+
+export const videoInsertSchema = createInsertSchema(videos);
+export const videoSelectSchema = createSelectSchema(videos);
+export const videoUpdateSchema = createUpdateSchema(videos);
 
 export const videoRelations = relations(videos, ({ one }) => ({
     user: one(users, {

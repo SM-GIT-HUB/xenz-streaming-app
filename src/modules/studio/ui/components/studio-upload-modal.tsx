@@ -1,12 +1,14 @@
 'use client'
 
 import { trpc } from '@/trpc/client'
+import { useRouter } from 'next/navigation'
 
-import { Loader2Icon, PlusIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import ResponsiveModal from '@/components/responsive-modal'
+import { Loader2Icon, PlusIcon } from 'lucide-react'
+
 import StudioUploader from './studio-uploader'
+import { Button } from '@/components/ui/button'
+import ResponsiveModal from '@/components/responsive-modal'
 
 function StudioUploadModal() {
   const utills = trpc.useUtils();
@@ -19,12 +21,24 @@ function StudioUploadModal() {
       toast.error("Something went wrong, please try again!");
     }
   })
+
+  const router = useRouter();
+
+  function onSuccess()
+  {
+    if (!create.data?.video.id) {
+      return;
+    }
+
+    create.reset();
+    router.push(`/studio/videos/${create.data.video.id}`);
+  }
   
   return (
     <>
       <ResponsiveModal title='Upload a video' open={!!create.data?.url} onOpenChange={() => create.reset()}>
         {
-          create.data?.url? <StudioUploader endpoint={create.data?.url} onSuccess={() => {}} /> :
+          create.data?.url? <StudioUploader endpoint={create.data?.url} onSuccess={onSuccess} /> :
           <Loader2Icon/>
         }
       </ResponsiveModal>
