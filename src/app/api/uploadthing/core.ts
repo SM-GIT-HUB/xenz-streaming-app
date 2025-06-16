@@ -1,11 +1,12 @@
-import { UploadThingError } from "uploadthing/server"
+import { UploadThingError, UTApi } from "uploadthing/server"
 import { createUploadthing, type FileRouter } from "uploadthing/next"
 
 import { db } from "@/db"
-import { string, z } from "zod"
 import { users, videos } from "@/db/schema"
-import { auth } from "@clerk/nextjs/server"
+
+import { string, z } from "zod"
 import { and, eq } from "drizzle-orm"
+import { auth } from "@clerk/nextjs/server"
 
 const f = createUploadthing();
 
@@ -30,16 +31,40 @@ export const ourFileRouter = {
       throw new UploadThingError("Unauthorized");
     }
 
-    return { userId: user.id, ...input };
+    const [video] = await db.select().from(videos).where(and(
+      eq(videos.id, input.videoId),
+      eq(videos.userId, user.id)
+    ))
+
+    if (!video) {
+      throw new UploadThingError("Video not found");
+    }
+
+    return { userId: user.id, video, ...input }; 
   })
   .onUploadComplete(async ({ metadata, file }) => {
-    await db.update(videos).set({
-      thumbnailUrl: file.url
+    const [updatedVideo] = await db.update(videos).set({
+      thumbnailUrl: file.url,
+      thumbnailKey: file.key
     })
     .where(and(
       eq(videos.id, metadata.videoId),
       eq(videos.userId, metadata.userId)
     ))
+    .returning()
+
+    if (!updatedVideo)
+    {
+      const utapi = new UTApi();
+      await utapi.deleteFiles(file.key);
+      throw new UploadThingError("Something went wrong");
+    }
+
+    if (metadata.video.thumbnailKey && metadata.video.thumbnailKey != metadata.video.defaultThumbnailKey)
+    {
+      const utapi = new UTApi();
+      await utapi.deleteFiles(metadata.video.thumbnailKey);
+    }
 
     return { uploadedBy: metadata.userId };
   }),

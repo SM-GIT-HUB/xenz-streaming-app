@@ -22,7 +22,7 @@ export default clerkMiddleware(async(auth, req) => {
     await auth.protect();
   }
 
-  const ip = getIP(req);
+  // const ip = getIP(req);
   // const { success } = await ratelimit.limit(ip);
 
   // if (!success) {

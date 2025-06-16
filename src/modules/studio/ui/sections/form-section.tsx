@@ -64,6 +64,19 @@ function FormSectionSuspense({ videoId } : PageProps)
     }
   })
 
+  const restoreThumbnail = trpc.videos.restoreThumbnail.useMutation({
+    onSuccess: () => {
+      utils.studio.getMany.invalidate();
+      utils.studio.getOne.invalidate({ id: videoId });
+      toast.dismiss();
+      toast.success("Video thumbnail restored");
+    },
+    onError: () => {
+      toast.dismiss();
+      toast.error("Something went wrong");
+    }
+  })
+
   const remove = trpc.videos.remove.useMutation({
     onSuccess: () => {
       utils.studio.getMany.invalidate();
@@ -97,6 +110,8 @@ function FormSectionSuspense({ videoId } : PageProps)
       setIsCopied(false);
     }, 2000)
   }
+
+  console.log(video.thumbnailUrl, "  here  ");
 
   return (
     <>
@@ -191,7 +206,10 @@ function FormSectionSuspense({ videoId } : PageProps)
                             AI-generated
                           </DropdownMenuItem>
 
-                          <DropdownMenuItem className="cursor-pointer">
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => {
+                            toast.loading("Please wait...");
+                            restoreThumbnail.mutate({ id: videoId });
+                          }}>
                             <RotateCcwIcon className="size-4 mr-1" />
                             Restore
                           </DropdownMenuItem>

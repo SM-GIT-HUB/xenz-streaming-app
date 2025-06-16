@@ -6,6 +6,7 @@ import { and, eq } from "drizzle-orm"
 
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"
+import { UTApi } from "uploadthing/server"
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init"
 
 export const videosRouter = createTRPCRouter({
@@ -68,12 +69,63 @@ export const videosRouter = createTRPCRouter({
         return updatedVideo;
     }),
 
+    restoreThumbnail: protectedProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+        const { id: userId } = ctx.user;
+
+        if (!input.id) {
+            throw new TRPCError({ message: "Video id not found", code: "NOT_FOUND" });
+        }
+
+        const [video] = await db.select().from(videos).where(and(
+            eq(videos.id, input.id),
+            eq(videos.userId, userId)
+        ))
+
+        if (!video) {
+            throw new TRPCError({ message: "Video not found", code: "NOT_FOUND" });
+        }
+
+        const [updatedVideo] = await db.update(videos).set({
+            thumbnailUrl: video.defaultThumbnailUrl,
+            thumbnailKey: video.defaultThumbnailKey
+        })
+        .where(and(
+            eq(videos.id, input.id),
+            eq(videos.userId, userId)
+        ))
+        .returning()
+
+        if (!updatedVideo) {
+            throw new TRPCError({ message: "Something went wrong", code: "INTERNAL_SERVER_ERROR" });
+        }
+
+        if (video.thumbnailKey && video.thumbnailKey != video.defaultThumbnailKey)
+        {
+            const utapi = new UTApi();
+            await utapi.deleteFiles(video.thumbnailKey);
+        }
+
+        return updatedVideo;
+    }),
+
     remove: protectedProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
         const { id: userId } = ctx.user;
 
         if (!input.id) {
             throw new TRPCError({ message: "Video id not found", code: "NOT_FOUND" });
         }
+
+        const [video] = await db.select().from(videos).where(and(
+            eq(videos.id, input.id),
+            eq(videos.userId, userId)
+        ))
+
+        if (!video) {
+            throw new TRPCError({ message: "Video not found", code: "NOT_FOUND" });
+        }
+
+        const thumbnailKey = video.thumbnailKey;
+        const previewKey = video.previewKey;
 
         const [removedVideo] = await db.delete(videos).where(and(
             eq(videos.id, input.id),
@@ -82,7 +134,25 @@ export const videosRouter = createTRPCRouter({
         .returning()
 
         if (!removedVideo) {
-            throw new TRPCError({ message: "Something went wrong", code: "NOT_FOUND" });
+            throw new TRPCError({ message: "Something went wrong", code: "INTERNAL_SERVER_ERROR" });
+        }
+
+        if (thumbnailKey)
+        {
+            const utapi = new UTApi();
+            utapi.deleteFiles([thumbnailKey]);
+        }
+        
+        if (video.defaultThumbnailKey)
+        {
+            const utapi = new UTApi();
+            utapi.deleteFiles([video.defaultThumbnailKey]);
+        }
+
+        if (previewKey)
+        {
+            const utapi = new UTApi();
+            utapi.deleteFiles([previewKey]);
         }
 
         return removedVideo;
