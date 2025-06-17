@@ -8,6 +8,7 @@ import { z } from "zod"
 import { TRPCError } from "@trpc/server"
 import { UTApi } from "uploadthing/server"
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init"
+import { workflow } from "@/lib/workflow"
 
 export const videosRouter = createTRPCRouter({
     create: protectedProcedure.mutation(async ({ ctx }) => {
@@ -35,6 +36,7 @@ export const videosRouter = createTRPCRouter({
             userId,
             title: "Nothing",
             muxStatus: "waiting",
+            description: "This is a default description. Change it as you wish.",
             muxUploadId: upload.id
         })
         .returning()
@@ -67,6 +69,48 @@ export const videosRouter = createTRPCRouter({
         }
 
         return updatedVideo;
+    }),
+
+    generateThumbnail: protectedProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+        const { id: userId } = ctx.user;
+
+        const { workflowRunId } = await workflow.trigger({
+            url: `${process.env.UPSTASH_WORKFLOW_URL}/api/videos/workflows/thumbnail`,
+            body: { userId, videoId: input.id },
+            headers: {},
+            // workflowRunId: "my-workflow", 
+            retries: 3
+        })
+
+        return workflowRunId;
+    }),
+
+    generateTitle: protectedProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+        const { id: userId } = ctx.user;
+
+        const { workflowRunId } = await workflow.trigger({
+            url: `${process.env.UPSTASH_WORKFLOW_URL}/api/videos/workflows/title`,
+            body: { userId, videoId: input.id },
+            headers: {},
+            // workflowRunId: "my-workflow", 
+            retries: 3
+        })
+
+        return workflowRunId;
+    }),
+
+    generateDescription: protectedProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+        const { id: userId } = ctx.user;
+
+        const { workflowRunId } = await workflow.trigger({
+            url: `${process.env.UPSTASH_WORKFLOW_URL}/api/videos/workflows/description`,
+            body: { userId, videoId: input.id },
+            headers: {},
+            // workflowRunId: "my-workflow", 
+            retries: 3
+        })
+
+        return workflowRunId;
     }),
 
     restoreThumbnail: protectedProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {

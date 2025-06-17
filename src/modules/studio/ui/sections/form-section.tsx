@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { Suspense, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ErrorBoundary } from "react-error-boundary"
-import { CopyCheckIcon, CopyIcon, Globe2Icon, ImagePlusIcon, LockIcon, MoreVerticalIcon, RotateCcwIcon, SparklesIcon, TrashIcon } from "lucide-react"
+import { CopyCheckIcon, CopyIcon, Globe2Icon, ImagePlusIcon, Loader2Icon, LockIcon, MoreVerticalIcon, RotateCcwIcon, SparklesIcon, TrashIcon } from "lucide-react"
 
 import { trpc } from "@/trpc/client"
 
@@ -77,6 +77,33 @@ function FormSectionSuspense({ videoId } : PageProps)
     }
   })
 
+  const generateThumbnail = trpc.videos.generateThumbnail.useMutation({
+    onSuccess: () => {
+      toast.success("Background job started", { description: "This may take some time" });
+    },
+    onError: () => {
+      toast.error("Something went wrong");
+    }
+  })
+
+  const generateTitle = trpc.videos.generateTitle.useMutation({
+    onSuccess: () => {
+      toast.success("Background job started", { description: "This may take some time" });
+    },
+    onError: () => {
+      toast.error("Something went wrong");
+    }
+  })
+
+  const generateDescription = trpc.videos.generateDescription.useMutation({
+    onSuccess: () => {
+      toast.success("Background job started", { description: "This may take some time" });
+    },
+    onError: () => {
+      toast.error("Something went wrong");
+    }
+  })
+
   const remove = trpc.videos.remove.useMutation({
     onSuccess: () => {
       utils.studio.getMany.invalidate();
@@ -111,7 +138,27 @@ function FormSectionSuspense({ videoId } : PageProps)
     }, 2000)
   }
 
-  console.log(video.thumbnailUrl, "  here  ");
+  function titleGenerate()
+  {
+    if (!video.muxTrackId && !video.description)
+    {
+      toast.error("Your video must have Subtitles or Description.");
+      return;
+    }
+
+    generateTitle.mutate({ id: videoId });
+  }
+
+  function descriptionGenerate()
+  {
+    if (!video.muxTrackId && !video.title)
+    {
+      toast.error("Your video must have Title or Subtitles.");
+      return;
+    }
+
+    generateDescription.mutate({ id: videoId });
+  }
 
   return (
     <>
@@ -154,7 +201,18 @@ function FormSectionSuspense({ videoId } : PageProps)
               <FormField control={form.control} name="title" render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-semibold text-lg">
-                    Title
+                    <div className="flex items-center gap-x-2">
+                      Title
+
+                      {
+                        generateTitle.isPending? <Loader2Icon className="animate-spin text-[#00000097]"/> :
+                        <Button size="icon" variant="outline" type="button" className="rounded-full size-6 [&_svg]:size-3" onClick={titleGenerate}
+                        disabled={generateTitle.isPending || !video.muxAssetId}>
+                          <SparklesIcon/>
+                        </Button>
+                      }
+
+                    </div>
                   </FormLabel>
 
                   <FormControl>
@@ -168,7 +226,18 @@ function FormSectionSuspense({ videoId } : PageProps)
               <FormField control={form.control} name="description" render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-semibold">
-                    Description
+                    <div className="flex items-center gap-x-2">
+                      Description
+
+                      {
+                        generateDescription.isPending? <Loader2Icon className="animate-spin text-[#00000097]"/> :
+                        <Button size="icon" variant="outline" type="button" className="rounded-full size-6 [&_svg]:size-3" onClick={descriptionGenerate}
+                        disabled={generateDescription.isPending || !video.muxAssetId}>
+                          <SparklesIcon/>
+                        </Button>
+                      }
+
+                    </div>
                   </FormLabel>
 
                   <FormControl>
@@ -181,10 +250,10 @@ function FormSectionSuspense({ videoId } : PageProps)
 
               <FormField name="thumbnailUrl" control={form.control} render={() => (
                 <FormItem>
-                  <FormLabel>Thumbnail</FormLabel>
+                  <FormLabel className="font-semibold">Thumbnail</FormLabel>
 
                   <FormControl>
-                    <div className="p-0.5 border border-dashed border-neutral-400 relative h-[84px] w-[153px] group">
+                    <div className="p-0.5 border border-dashed border-neutral-400 hover:border-black duration-300 relative h-[84px] w-[153px] group">
                       <Image fill alt="Thumbnail" src={video.thumbnailUrl ?? "/placeholder.svg"} className="object-cover" />
 
                       <DropdownMenu>
@@ -201,7 +270,7 @@ function FormSectionSuspense({ videoId } : PageProps)
                             Change
                           </DropdownMenuItem>
 
-                          <DropdownMenuItem className="cursor-pointer">
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => generateThumbnail.mutate({ id: videoId })}>
                             <SparklesIcon className="size-4 mr-1" />
                             AI-generated
                           </DropdownMenuItem>

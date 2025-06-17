@@ -154,7 +154,6 @@ export async function POST(req: Request)
         }
 
         case "video.asset.deleted": {
-            console.log("here deleting");
             const data = payload.data as VideoAssetDeletedWebhookEvent["data"];
 
             if (!data.upload_id) {
