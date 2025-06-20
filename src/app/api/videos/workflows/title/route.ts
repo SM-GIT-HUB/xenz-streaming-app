@@ -44,7 +44,7 @@ export const { POST } = serve(
       }
 
       const text = await response.text();
-      return text + ". " + "Transcript ended. Now video description: " + video.description;
+      return text + ". " + "Transcript ended. Now also passing the video description: " + video.description;
     })
 
     const title = await context.run("generate-title", async () => {
@@ -57,8 +57,8 @@ export const { POST } = serve(
           "X-Title": "YouTube clone title generator"
         },
         body: JSON.stringify({
-          // model: "deepseek/deepseek-chat-v3-0324:free",
-          model: "google/gemini-2.0-flash-exp:free",
+          model: "deepseek/deepseek-chat-v3-0324:free",
+          // model: "google/gemini-2.0-flash-exp:free",
           messages: [
             { role: "system", content: TITLE_SYSTEM_PROMPT },
             { role: "user", content: transcript }

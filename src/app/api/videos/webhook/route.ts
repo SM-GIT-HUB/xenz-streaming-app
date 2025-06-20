@@ -48,6 +48,8 @@ export async function POST(req: Request)
                 return new Response("No upload id found", { status: 400 });
             }
 
+            console.log(data.upload_id, "Data uploadid");
+
             await db.update(videos).set({
                 muxAssetId: data.id,
                 muxStatus: data.status,
@@ -70,7 +72,13 @@ export async function POST(req: Request)
                 return new Response("Missing playback ID", { status: 400 });
             }
 
+            console.log(data.upload_id, "Data uploadid");
+
             const [video] = await db.select().from(videos).where(eq(videos.muxUploadId, data.upload_id));
+
+            if (!video) {
+                return new Response("Video not found", { status: 404 });
+            }
 
             const utapi = new UTApi();
 
@@ -144,6 +152,8 @@ export async function POST(req: Request)
                 return new Response("No upload id found", { status: 400 });
             }
 
+            console.log(data.upload_id, "Data uploadid");
+
             await db.update(videos).set({
                 muxStatus: data.status
             })
@@ -160,7 +170,27 @@ export async function POST(req: Request)
                 return new Response("No upload id found", { status: 400 });
             }
 
-            await db.delete(videos).where(eq(videos.muxUploadId, data.upload_id));
+            console.log(data.upload_id, "Data uploadid");
+
+            const [video] = await db.delete(videos).where(eq(videos.muxUploadId, data.upload_id)).returning();
+
+            if (!video) {
+                return new Response("Video not found", { status: 404 });
+            }
+
+            const utapi = new UTApi();
+
+            if (video.defaultThumbnailKey) {
+                utapi.deleteFiles(video.defaultThumbnailKey);
+            }
+
+            if (video.thumbnailKey && video.thumbnailKey != video.defaultThumbnailKey) {
+                utapi.deleteFiles(video.thumbnailKey);
+            }
+
+            if (video.previewKey) {
+                utapi.deleteFiles(video.previewKey);
+            }
 
             console.log("Webhook fired asset deleted");
             break;

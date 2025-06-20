@@ -71,15 +71,15 @@ export const videosRouter = createTRPCRouter({
         return updatedVideo;
     }),
 
-    generateThumbnail: protectedProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+    generateThumbnail: protectedProcedure.input(z.object({ id: z.string().uuid(), prompt: z.string().min(20) })).mutation(async ({ ctx, input }) => {
         const { id: userId } = ctx.user;
 
         const { workflowRunId } = await workflow.trigger({
             url: `${process.env.UPSTASH_WORKFLOW_URL}/api/videos/workflows/thumbnail`,
-            body: { userId, videoId: input.id },
+            body: { userId, videoId: input.id, prompt: input.prompt },
             headers: {},
             // workflowRunId: "my-workflow", 
-            retries: 3
+            retries: 0
         })
 
         return workflowRunId;
@@ -168,37 +168,18 @@ export const videosRouter = createTRPCRouter({
             throw new TRPCError({ message: "Video not found", code: "NOT_FOUND" });
         }
 
-        const thumbnailKey = video.thumbnailKey;
-        const previewKey = video.previewKey;
+        const assetId = video.muxAssetId;
 
-        const [removedVideo] = await db.delete(videos).where(and(
-            eq(videos.id, input.id),
-            eq(videos.userId, userId)
-        ))
-        .returning()
+        const credentials = `${process.env.MUX_TOKEN_ID}:${process.env.MUX_TOKEN_SECRET}`;
+        const base64 = Buffer.from(credentials).toString("base64");
 
-        if (!removedVideo) {
-            throw new TRPCError({ message: "Something went wrong", code: "INTERNAL_SERVER_ERROR" });
-        }
+        await fetch(`https://api.mux.com/video/v1/assets/${assetId}`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Basic ${base64}`,
+            }
+        })
 
-        if (thumbnailKey)
-        {
-            const utapi = new UTApi();
-            utapi.deleteFiles([thumbnailKey]);
-        }
-        
-        if (video.defaultThumbnailKey)
-        {
-            const utapi = new UTApi();
-            utapi.deleteFiles([video.defaultThumbnailKey]);
-        }
-
-        if (previewKey)
-        {
-            const utapi = new UTApi();
-            utapi.deleteFiles([previewKey]);
-        }
-
-        return removedVideo;
+        return new Response("Success", { status: 200 });
     })
 })
